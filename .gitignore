@@ -1,0 +1,28 @@
+# Node
+node_modules/
+package-lock.json
+
+# Playwright
+test-results/
+e2e/report/
+playwright-report/
+
+# Windows Zone.Identifier
+*.Zone.Identifier
+*:Zone.Identifier
+
+# Backend build
+backend/target/
+
+# Frontend build
+frontend/build/
+frontend/node_modules/
+
+# IDE / OS
+.DS_Store
+*.iml
+.idea/
+.serena/
+
+# Logs
+*.log
