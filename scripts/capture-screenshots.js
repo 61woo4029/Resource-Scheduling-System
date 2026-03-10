@@ -27,7 +27,10 @@ async function login(page, cred = ADMIN) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--font-render-hinting=none', '--disable-font-subpixel-positioning'],
+  });
   const page = await browser.newPage();
   await page.setViewportSize({ width: 1280, height: 800 });
 
