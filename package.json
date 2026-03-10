@@ -9,5 +9,8 @@
   "scripts": {
     "test": "playwright test",
     "test:report": "playwright show-report e2e/report"
+  },
+  "dependencies": {
+    "docx": "^9.6.0"
   }
 }
