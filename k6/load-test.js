@@ -18,10 +18,16 @@ import { SharedArray } from 'k6/data';
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080/api';
 const TODAY = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-// 테스트 계정 (DataInitializer로 생성된 기본 계정)
+// 테스트 계정 (환경변수 우선, fallback으로 기본 계정 사용)
 const ACCOUNTS = new SharedArray('accounts', () => [
-  { email: 'admin@selim.kr', password: 'admin123!' },
-  { email: 'user@selim.kr',  password: 'user123!'  },
+  {
+    email:    __ENV.ADMIN_EMAIL    || 'admin@selim.kr',
+    password: __ENV.ADMIN_PASSWORD || 'admin123!',
+  },
+  {
+    email:    __ENV.USER_EMAIL    || 'user@selim.kr',
+    password: __ENV.USER_PASSWORD || 'user123!',
+  },
 ]);
 
 // ─── 커스텀 메트릭 ────────────────────────────────────────────────────────────
@@ -93,19 +99,18 @@ export default function () {
     );
     loginDuration.add(Date.now() - start);
 
+    // body 1회만 파싱
+    let body = null;
+    try { body = JSON.parse(res.body); } catch (_) {}
+
     const ok = check(res, {
       '로그인 성공 (200)': (r) => r.status === 200,
-      '토큰 발급됨':       (r) => {
-        try { return !!JSON.parse(r.body).data?.accessToken; }
-        catch { return false; }
-      },
+      '토큰 발급됨':       () => !!body?.data?.accessToken,
     });
 
     loginFailRate.add(!ok);
 
-    if (ok) {
-      token = JSON.parse(res.body).data.accessToken;
-    }
+    if (ok) token = body.data.accessToken;
   });
 
   if (!token) {
@@ -260,14 +265,12 @@ export function handleSummary(data) {
   API 오류:        ${fmt((metrics.api_error_rate?.values?.rate ?? 0) * 100)} %
 
 [임계값 통과 여부]
-${Object.entries(data.root_group?.checks ?? {}).length === 0
-  ? '  (임계값 정보 없음)'
-  : Object.entries(metrics)
-      .filter(([, v]) => v.thresholds)
-      .map(([k, v]) => {
-        const passed = Object.values(v.thresholds).every((t) => !t.ok === false);
-        return `  ${passed ? '✓' : '✗'} ${k}`;
-      }).join('\n')}
+${Object.entries(metrics)
+  .filter(([, v]) => v.thresholds)
+  .map(([k, v]) => {
+    const allPassed = Object.values(v.thresholds).every((t) => t.ok);
+    return `  ${allPassed ? '✓' : '✗'} ${k}`;
+  }).join('\n') || '  (임계값 없음)'}
 
 ========================================
 `;
