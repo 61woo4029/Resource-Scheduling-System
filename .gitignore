@@ -26,3 +26,8 @@ frontend/node_modules/
 
 # Logs
 *.log
+
+# k6 결과 파일 (실행마다 갱신되는 생성 파일)
+k6/result-summary.txt
+k6/result.json
+k6/result.csv
